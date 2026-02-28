@@ -1,0 +1,26 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.First" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="colorPrimary">@color/gradient_start_pink</item>
+        <item name="colorPrimaryVariant">@color/gradient_start_pink</item>
+        <item name="colorOnPrimary">@color/ios_text_light</item>
+        <item name="colorSecondary">@color/gradient_end_pink</item>
+        <item name="colorSecondaryVariant">@color/gradient_end_pink</item>
+        <item name="colorOnSecondary">@color/ios_text_light</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:windowBackground">@color/ios_background_dark</item>
+        <item name="android:textColor">@color/ios_text_light</item>
+        <item name="android:fontFamily">sans-serif-light</item> <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.MediumComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.App.SmallComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="ShapeAppearance.App.MediumComponent" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+</resources>

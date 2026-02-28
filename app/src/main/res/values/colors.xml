@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <color name="main_bg">#F4F7FA</color>
+    <color name="ios_background_dark">#000000</color> <color name="ios_text_light">#FFFFFF</color>
+    <color name="gradient_start_pink">#4A0E4F</color> <color name="gradient_end_pink">#F06292</color>
+
+
+    <color name="text_gray">#7F8C8D</color>
+    <color name="bg_light_blue">#E3F2FD</color>
+    <color name="card_white">#FFFFFF</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="accent_green">#2ECC71</color>
+
+
+    <color name="dark_gray">#121212</color>
+    <color name="card_bg">#1E1E1E</color>
+    <color name="main_blue">#2196F3</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="expired_red">#FF5252</color>
+    <color name="fresh_green">#4CAF50</color>
+    <color name="background_gray">#F2F5F8</color>
+    <color name="primary_blue">#3498DB</color>
+</resources>
