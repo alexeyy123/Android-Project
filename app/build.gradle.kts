@@ -1,17 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
     namespace = "alex.qochinyan.first"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 35 // Рекомендую пока оставить 35, так как 36 еще в превью
 
     defaultConfig {
-        applicationId = "alex.qochinyan.FoodGuard"
-        minSdk = 26
-        targetSdk = 36
+        applicationId = "alex.qochinyan.first"
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -34,19 +33,29 @@ android {
 }
 
 dependencies {
+    // Firebase (Используем платформу BOM для управления версиями)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-auth") // ВОТ ЭТОГО НЕ ХВАТАЛО
+
+    // Базовые библиотеки
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // Сканер и сеть
     implementation(libs.play.services.mlkit.barcode.scanning)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Room
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
 
-
+    // Тесты
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 }

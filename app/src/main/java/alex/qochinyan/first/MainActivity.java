@@ -2,23 +2,32 @@ package alex.qochinyan.first;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
+
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -32,29 +41,45 @@ public class MainActivity extends AppCompatActivity {
     private AppDatabase db;
     private final OkHttpClient client = new OkHttpClient();
 
+    // ВОТ ЭТИ СТРОКИ ИСПРАВЛЯЮТ ТВОИ КРАСНЫЕ ОШИБКИ
+    private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Инициализация базы данных и UI
+        // 1. Инициализация Auth и проверка юзера
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser == null) {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // 2. Инициализация базы ПЕРСОНАЛЬНО для юзера
+        String userId = currentUser.getUid();
+        mDatabase = FirebaseDatabase.getInstance().getReference("users").child(userId).child("products");
+
         db = AppDatabase.getInstance(this);
         rvProducts = findViewById(R.id.rvProducts);
         FloatingActionButton fabScan = findViewById(R.id.fabScan);
 
-        // Загрузка данных из Room
-        productList = new ArrayList<>(db.productDao().getAllProducts());
-        adapter = new ProductAdapter(productList);
-        rvProducts.setLayoutManager(new LinearLayoutManager(this));
-        rvProducts.setAdapter(adapter);
+        // Загрузка из локальной базы Room
+        new Thread(() -> {
+            List<Product> savedProducts = db.productDao().getAllProducts();
+            runOnUiThread(() -> {
+                productList = new ArrayList<>(savedProducts);
+                adapter = new ProductAdapter(productList);
+                rvProducts.setLayoutManager(new LinearLayoutManager(this));
+                rvProducts.setAdapter(adapter);
+            });
+        }).start();
 
-        fabScan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startScanner();
-            }
-        });
-
+        fabScan.setOnClickListener(v -> startScanner());
         setupSwipeToDelete();
     }
 
@@ -63,8 +88,8 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(barcode -> {
                     String code = barcode.getRawValue();
                     if (code != null) {
-                        // Временный статус поиска
-                        Product newProduct = new Product("Searching...", "Waiting for data...", false);
+                        Product newProduct = new Product("Searching...", "Waiting...", false);
+                        newProduct.setBarcode(code);
                         productList.add(0, newProduct);
                         adapter.notifyItemInserted(0);
                         rvProducts.scrollToPosition(0);
@@ -81,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                updateUI(0, "Network Error", "No Internet Connection");
+                updateUI(0, "Network Error", "No Internet");
             }
 
             @Override
@@ -90,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         String responseData = response.body().string();
                         JSONObject json = new JSONObject(responseData);
-
                         runOnUiThread(() -> {
                             if (!productList.isEmpty()) {
                                 Product p = productList.get(0);
@@ -98,16 +122,14 @@ public class MainActivity extends AppCompatActivity {
                                     JSONObject productData = json.optJSONObject("product");
                                     String name = productData.optString("product_name", "Unknown Item");
                                     p.setName(name);
-                                    // После нахождения имени — спрашиваем дату
                                     showDatePickerAndSave(p);
                                 } else {
-                                    // Если в базе нет — ручной ввод имени, потом даты
                                     showManualInputDialog(p, code);
                                 }
                             }
                         });
                     } catch (Exception e) {
-                        updateUI(0, "Data Error", "API Response Error");
+                        updateUI(0, "Data Error", "API Error");
                     }
                 }
             }
@@ -117,47 +139,42 @@ public class MainActivity extends AppCompatActivity {
     private void showManualInputDialog(Product p, String code) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Product Not Found");
-        builder.setMessage("Please enter product name:");
-
+        builder.setMessage("Enter product name:");
         final EditText input = new EditText(this);
-        input.setHint("e.g. Milk, Bread, Juice");
         builder.setView(input);
 
-        builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String manualName = input.getText().toString();
-                p.setName(manualName.isEmpty() ? "Custom Item" : manualName);
-                showDatePickerAndSave(p);
-            }
+        builder.setPositiveButton("Next", (dialog, which) -> {
+            String manualName = input.getText().toString();
+            p.setName(manualName.isEmpty() ? "Custom Item" : manualName);
+            showDatePickerAndSave(p);
         });
-
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             productList.remove(0);
             adapter.notifyItemRemoved(0);
         });
-
         builder.show();
     }
 
     private void showDatePickerAndSave(Product p) {
         final Calendar c = Calendar.getInstance();
-        int year = c.get(Calendar.YEAR);
-        int month = c.get(Calendar.MONTH);
-        int day = c.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year1, monthOfYear, dayOfMonth) -> {
-            String selectedDate = "Expires: " + dayOfMonth + "/" + (monthOfYear + 1) + "/" + year1;
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, day) -> {
+            String selectedDate = "Expires: " + day + "/" + (month + 1) + "/" + year;
             p.setExpiryDate(selectedDate);
 
-            // Сохраняем в БД только когда есть и имя, и дата
             new Thread(() -> db.productDao().insert(p)).start();
+            saveToFirebase(p);
             adapter.notifyItemChanged(0);
-
-        }, year, month, day);
+        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
 
         datePickerDialog.setTitle("Select Expiry Date");
         datePickerDialog.show();
+    }
+
+    private void saveToFirebase(Product p) {
+        String firebaseKey = mDatabase.push().getKey();
+        if (firebaseKey != null) {
+            mDatabase.child(firebaseKey).setValue(p);
+        }
     }
 
     private void updateUI(int pos, String name, String date) {
@@ -182,6 +199,19 @@ public class MainActivity extends AppCompatActivity {
                 int position = viewHolder.getAdapterPosition();
                 Product p = productList.get(position);
                 new Thread(() -> db.productDao().delete(p)).start();
+
+                // Удаление из Firebase
+                mDatabase.orderByChild("name").equalTo(p.getName()).addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull com.google.firebase.database.DataSnapshot snapshot) {
+                        for (com.google.firebase.database.DataSnapshot child : snapshot.getChildren()) {
+                            child.getRef().removeValue();
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {}
+                });
+
                 productList.remove(position);
                 adapter.notifyItemRemoved(position);
             }

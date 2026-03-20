@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "166611156629",
+    "firebase_url": "https://foodguard-f3c8d722-default-rtdb.firebaseio.com",
+    "project_id": "foodguard-f3c8d722",
+    "storage_bucket": "foodguard-f3c8d722.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:166611156629:android:01d02a8049d5139dd3e59c",
+        "android_client_info": {
+          "package_name": "alex.qochinyan.FoodGuard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWzejSX9KYLQOeWFcDmR_d8T0nOH-Jl9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:166611156629:android:990d6abc2282dc2bd3e59c",
+        "android_client_info": {
+          "package_name": "alex.qochinyan.first"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWzejSX9KYLQOeWFcDmR_d8T0nOH-Jl9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
