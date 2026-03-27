@@ -2,6 +2,7 @@ package alex.qochinyan.first;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -24,9 +25,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // ПРОВЕРКА: Если пользователь уже вошел, сразу открываем главное меню
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
+        // Если уже вошли — летим в Main
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
@@ -51,36 +51,46 @@ public class LoginActivity extends AppCompatActivity {
         registerBtn = findViewById(R.id.registerBtn);
         guestBtn = findViewById(R.id.guestBtn);
 
+        // РЕГИСТРАЦИЯ / ВХОД ПО ПОЧТЕ
         registerBtn.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString().trim();
 
             if (email.isEmpty() || password.length() < 6) {
-                Toast.makeText(this, "Check email and password (min 6 symbols)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Email empty or pass < 6 symbols", Toast.LENGTH_SHORT).show();
             } else {
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this, task -> {
                             if (task.isSuccessful()) {
-                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                finish();
+                                goToMain();
                             } else {
                                 mAuth.signInWithEmailAndPassword(email, password)
                                         .addOnCompleteListener(taskLogin -> {
-                                            if (taskLogin.isSuccessful()) {
-                                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                                finish();
-                                            } else {
-                                                Toast.makeText(this, "Auth Error", Toast.LENGTH_SHORT).show();
-                                            }
+                                            if (taskLogin.isSuccessful()) goToMain();
+                                            else Toast.makeText(this, "Auth Error", Toast.LENGTH_SHORT).show();
                                         });
                             }
                         });
             }
         });
 
+        // ВХОД КАК ГОСТЬ (ИСПРАВЛЕНО)
         guestBtn.setOnClickListener(v -> {
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish();
+            mAuth.signInAnonymously()
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+                            Log.d("AUTH", "Guest sign-in success");
+                            goToMain();
+                        } else {
+                            Log.e("AUTH", "Guest sign-in failed", task.getException());
+                            Toast.makeText(this, "Guest login error", Toast.LENGTH_SHORT).show();
+                        }
+                    });
         });
+    }
+
+    private void goToMain() {
+        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        finish();
     }
 }
