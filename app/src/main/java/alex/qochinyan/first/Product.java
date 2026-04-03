@@ -14,18 +14,20 @@ public class Product {
     private String expiryDate;
     private boolean isExpired;
     private String barcode; // Поле для штрих-кода
+    private boolean isDeleted = false;
 
     // 1. ПУСТОЙ КОНСТРУКТОР (Нужен для Firebase, чтобы он мог создать объект)
     public Product() {
     }
 
     // Конструктор для Room (с ID)
-    public Product(int id, String name, String expiryDate, boolean isExpired, String barcode) {
+    public Product(int id, String name, String expiryDate, boolean isExpired, String barcode, boolean isDeleted) {
         this.id = id;
         this.name = name;
         this.expiryDate = expiryDate;
         this.isExpired = isExpired;
         this.barcode = barcode;
+        this.isDeleted = isDeleted;
     }
 
     // 2. ОБНОВЛЕННЫЙ КОНСТРУКТОР ДЛЯ СКАНЕРА
@@ -34,6 +36,7 @@ public class Product {
         this.name = name;
         this.expiryDate = expiryDate;
         this.isExpired = isExpired;
+        this.isDeleted = false;
     }
 
     // ГЕТТЕРЫ И СЕТТЕРЫ
@@ -52,4 +55,7 @@ public class Product {
     // 3. НОВЫЕ МЕТОДЫ ДЛЯ ШТРИХ-КОДА (чтобы MainActivity не ругалась)
     public String getBarcode() { return barcode; }
     public void setBarcode(String barcode) { this.barcode = barcode; }
+
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
 }

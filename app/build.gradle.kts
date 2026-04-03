@@ -1,11 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
 }
 
 android {
     namespace = "alex.qochinyan.first"
-    compileSdk = 35 // Рекомендую пока оставить 35, так как 36 еще в превью
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "alex.qochinyan.first"
@@ -26,25 +27,30 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
 dependencies {
-    // Firebase (Используем платформу BOM для управления версиями)
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-database")
-    implementation("com.google.firebase:firebase-auth") // ВОТ ЭТОГО НЕ ХВАТАЛО
+    implementation("com.google.firebase:firebase-auth")
 
-    // Базовые библиотеки
+    // UI & Core
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
 
-    // Сканер и сеть
+    // ML Kit & Network
     implementation(libs.play.services.mlkit.barcode.scanning)
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -54,7 +60,7 @@ dependencies {
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
 
-    // Тесты
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

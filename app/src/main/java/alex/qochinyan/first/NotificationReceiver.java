@@ -13,7 +13,7 @@ public class NotificationReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String productName = intent.getStringExtra("productName");
 
-        // КРИТИЧЕСКАЯ ПРОВЕРКА: если имени нет, не показываем ничего
+
         if (productName == null || productName.isEmpty() || productName.equals("null")) {
             return;
         }
@@ -32,4 +32,4 @@ public class NotificationReceiver extends BroadcastReceiver {
             manager.notify(productName.hashCode(), builder.build());
         }
     }
-}
+}  

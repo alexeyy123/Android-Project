@@ -18,14 +18,14 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText emailInput, passwordInput;
+    private EditText emailInput, passwordInput, confirmPasswordInput;
     private Button registerBtn, guestBtn;
     private FirebaseAuth mAuth;
 
     @Override
     protected void onStart() {
         super.onStart();
-        // Если уже вошли — летим в Main
+
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -46,35 +46,58 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
+
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
+        confirmPasswordInput = findViewById(R.id.confirmPasswordInput); // Инициализируем новое поле
         registerBtn = findViewById(R.id.registerBtn);
         guestBtn = findViewById(R.id.guestBtn);
 
-        // РЕГИСТРАЦИЯ / ВХОД ПО ПОЧТЕ
+
         registerBtn.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString().trim();
+            String confirmPassword = confirmPasswordInput.getText().toString().trim();
 
-            if (email.isEmpty() || password.length() < 6) {
-                Toast.makeText(this, "Email empty or pass < 6 symbols", Toast.LENGTH_SHORT).show();
-            } else {
-                mAuth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(this, task -> {
-                            if (task.isSuccessful()) {
-                                goToMain();
-                            } else {
-                                mAuth.signInWithEmailAndPassword(email, password)
-                                        .addOnCompleteListener(taskLogin -> {
-                                            if (taskLogin.isSuccessful()) goToMain();
-                                            else Toast.makeText(this, "Auth Error", Toast.LENGTH_SHORT).show();
-                                        });
-                            }
-                        });
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            if (password.length() < 6) {
+                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+
+            if (!password.equals(confirmPassword)) {
+                Toast.makeText(this, "Passwords do not match!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+
+                            sendVerificationEmail();
+                            goToMain();
+                        } else {
+
+                            mAuth.signInWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener(taskLogin -> {
+                                        if (taskLogin.isSuccessful()) {
+                                            goToMain();
+                                        } else {
+                                            Toast.makeText(this, "Auth Error: " + taskLogin.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        }
+                    });
         });
 
-        // ВХОД КАК ГОСТЬ (ИСПРАВЛЕНО)
+
         guestBtn.setOnClickListener(v -> {
             mAuth.signInAnonymously()
                     .addOnCompleteListener(this, task -> {
@@ -87,6 +110,21 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
         });
+    }
+
+
+    private void sendVerificationEmail() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            user.sendEmailVerification()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(LoginActivity.this,
+                                    "Verification email sent to " + user.getEmail(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+        }
     }
 
     private void goToMain() {
