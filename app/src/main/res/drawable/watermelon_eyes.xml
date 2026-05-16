@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <!-- Watermelon shell -->
+    <path
+        android:fillColor="#26D07C"
+        android:pathData="M100,20C55.8,20 20,55.8 20,100C20,144.2 55.8,180 100,180C144.2,180 180,144.2 180,100C180,55.8 144.2,20 100,20ZM100,165C64.1,165 35,135.9 35,100C35,64.1 64.1,35 100,35C135.9,35 165,64.1 165,100C165,135.9 135.9,165 100,165Z" />
+    <!-- Red flesh -->
+    <path
+        android:fillColor="#FF5252"
+        android:pathData="M100,45C69.6,45 45,69.6 45,100C45,130.4 69.6,155 100,155C130.4,155 155,130.4 155,100C155,69.6 130.4,45 100,45Z" />
+    <!-- Eyes - White -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,90C85.5,90 90,85.5 90,80C90,74.5 85.5,70 80,70C74.5,70 70,74.5 70,80C70,85.5 74.5,90 80,90Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M120,90C125.5,90 130,85.5 130,80C130,74.5 125.5,70 120,70C114.5,70 110,74.5 110,80C110,85.5 114.5,90 120,90Z" />
+    <!-- Pupils - Black -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M82,82C84.2,82 86,80.2 86,78C86,75.8 84.2,74 82,74C79.8,74 78,75.8 78,78C78,80.2 79.8,82 82,82Z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M122,82C124.2,82 126,80.2 126,78C126,75.8 124.2,74 122,74C119.8,74 118,75.8 118,78C118,80.2 119.8,82 122,82Z" />
+    <!-- Smile -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M80,120Q100,140 120,120L120,125Q100,145 80,125Z" />
+</vector>
