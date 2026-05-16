@@ -3,25 +3,41 @@
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
 
-    <color name="main_bg">#F4F7FA</color>
-    <color name="ios_background_dark">#000000</color> <color name="ios_text_light">#FFFFFF</color>
-    <color name="gradient_start_pink">#4A0E4F</color> <color name="gradient_end_pink">#F06292</color>
+    <!-- Dark deep-blue / high-tech palette -->
+    <color name="app_background">#050A30</color>
+    <color name="app_background_pure_black">#000000</color>
+    <color name="accent_neon_blue">#00D4FF</color>
+    <color name="accent_blurple">#7289DA</color>
+    <color name="card_dark">#1A1A1A</color>
+    <color name="surface_nav">#080E24</color>
+    <color name="surface_elevated">#12182E</color>
+    <color name="text_primary_on_dark">#FFFFFF</color>
+    <color name="text_secondary_muted">#9EB0C8</color>
+    <color name="nav_icon_muted">#6B7A99</color>
+    <color name="stroke_neon">#00D4FF</color>
+    <color name="btn_logout_dark_blue">#0A1E3D</color>
+    <color name="chip_qty_bg">#142038</color>
+    <color name="avatar_placeholder_bg">#1E2A45</color>
 
-
-    <color name="text_gray">#7F8C8D</color>
-    <color name="bg_light_blue">#E3F2FD</color>
-    <color name="card_white">#FFFFFF</color>
-    <color name="primary_dark">#1565C0</color>
+    <!-- Legacy aliases (keep other layouts compiling) -->
+    <color name="main_bg">@color/app_background</color>
+    <color name="ios_background_dark">@color/black</color>
+    <color name="ios_text_light">@color/white</color>
+    <color name="gradient_start_pink">#050A30</color>
+    <color name="gradient_end_pink">#000000</color>
+    <color name="text_gray">#9EB0C8</color>
+    <color name="bg_light_blue">#142038</color>
+    <color name="card_white">@color/card_dark</color>
+    <color name="primary_dark">@color/accent_neon_blue</color>
     <color name="accent_green">#2ECC71</color>
-
-
     <color name="dark_gray">#121212</color>
-    <color name="card_bg">#1E1E1E</color>
-    <color name="main_blue">#2196F3</color>
-    <color name="text_white">#FFFFFF</color>
-    <color name="text_secondary">#B0B0B0</color>
+    <color name="card_bg">@color/card_dark</color>
+    <color name="main_blue">@color/accent_neon_blue</color>
+    <color name="text_white">@color/white</color>
+    <color name="text_secondary">@color/text_secondary_muted</color>
     <color name="expired_red">#FF5252</color>
     <color name="fresh_green">#4CAF50</color>
-    <color name="background_gray">#F2F5F8</color>
-    <color name="primary_blue">#3498DB</color>
+    <color name="background_gray">@color/app_background</color>
+    <color name="primary_blue">@color/accent_neon_blue</color>
+    <color name="toast_error_red">#FF3B30</color>
 </resources>

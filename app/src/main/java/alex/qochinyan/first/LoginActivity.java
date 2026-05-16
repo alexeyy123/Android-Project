@@ -2,133 +2,97 @@ package alex.qochinyan.first;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText emailInput, passwordInput, confirmPasswordInput;
-    private Button registerBtn, guestBtn;
+    private EditText emailField, passwordField, confirmPasswordField;
+    private MaterialButton loginBtn, signUpBtn, guestBtn;
     private FirebaseAuth mAuth;
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
+        mAuth = FirebaseAuth.getInstance();
+        // Если уже залогинены — летим в Main
+        if (mAuth.getCurrentUser() != null) {
+            startMainActivity();
         }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
-
-        emailInput = findViewById(R.id.emailInput);
-        passwordInput = findViewById(R.id.passwordInput);
-        confirmPasswordInput = findViewById(R.id.confirmPasswordInput); // Инициализируем новое поле
-        registerBtn = findViewById(R.id.registerBtn);
+        // Привязка UI
+        emailField = findViewById(R.id.emailField);
+        passwordField = findViewById(R.id.passwordField);
+        confirmPasswordField = findViewById(R.id.confirmPasswordField);
+        loginBtn = findViewById(R.id.loginBtn);
+        signUpBtn = findViewById(R.id.signUpBtn);
         guestBtn = findViewById(R.id.guestBtn);
 
-
-        registerBtn.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
-            String password = passwordInput.getText().toString().trim();
-            String confirmPassword = confirmPasswordInput.getText().toString().trim();
-
+        // ЛОГИН
+        loginBtn.setOnClickListener(v -> {
+            String email = emailField.getText().toString().trim();
+            String password = passwordField.getText().toString().trim();
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Введите почту и пароль", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (password.length() < 6) {
-                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+                            startMainActivity();
+                        } else {
+                            Toast.makeText(this, "Ошибка: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+        });
+
+        // РЕГИСТРАЦИЯ
+        signUpBtn.setOnClickListener(v -> {
+            String email = emailField.getText().toString().trim();
+            String password = passwordField.getText().toString().trim();
+            String confirm = confirmPasswordField.getText().toString().trim();
+
+            if (email.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
+                Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-
-            if (!password.equals(confirmPassword)) {
-                Toast.makeText(this, "Passwords do not match!", Toast.LENGTH_SHORT).show();
+            if (!password.equals(confirm)) {
+                Toast.makeText(this, "Пароли не совпадают!", Toast.LENGTH_SHORT).show();
                 return;
             }
-
 
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
-
-                            sendVerificationEmail();
-                            goToMain();
+                            startMainActivity();
                         } else {
-
-                            mAuth.signInWithEmailAndPassword(email, password)
-                                    .addOnCompleteListener(taskLogin -> {
-                                        if (taskLogin.isSuccessful()) {
-                                            goToMain();
-                                        } else {
-                                            Toast.makeText(this, "Auth Error: " + taskLogin.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                            Toast.makeText(this, "Ошибка регистрации: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
         });
 
-
-        guestBtn.setOnClickListener(v -> {
-            mAuth.signInAnonymously()
-                    .addOnCompleteListener(this, task -> {
-                        if (task.isSuccessful()) {
-                            Log.d("AUTH", "Guest sign-in success");
-                            goToMain();
-                        } else {
-                            Log.e("AUTH", "Guest sign-in failed", task.getException());
-                            Toast.makeText(this, "Guest login error", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        });
+        // ГОСТЬ (Работает без Firebase)
+        guestBtn.setOnClickListener(v -> startMainActivity());
     }
 
-
-    private void sendVerificationEmail() {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            user.sendEmailVerification()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(LoginActivity.this,
-                                    "Verification email sent to " + user.getEmail(),
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-        }
-    }
-
-    private void goToMain() {
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+    private void startMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 }

@@ -3,24 +3,24 @@ package alex.qochinyan.first;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
+import android.text.InputType;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -28,341 +28,232 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
-import java.util.Objects;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
-    private boolean showingActiveProducts = true;
-    private RecyclerView rvProducts;
-    private ProductAdapter adapter;
-    private List<Product> productList;
+
     private AppDatabase db;
-    private BottomNavigationView bottomNav;
-    private final OkHttpClient client = new OkHttpClient();
     private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.applyBeforeActivityCreate(getApplicationContext());
         super.onCreate(savedInstanceState);
+
+        if (getSupportActionBar() != null) getSupportActionBar().hide();
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
         setContentView(R.layout.activity_main);
+
+        String userId = (currentUser != null) ? currentUser.getUid() : "guest_user";
+        db = AppDatabase.getInstance(getApplicationContext());
+
+        if (currentUser != null) {
+            mDatabase = FirebaseDatabase.getInstance().getReference("users").child(userId).child("products");
+        } else {
+            mDatabase = null;
+        }
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
+
+        // --- ВОТ ЭТОТ КУСОК ОБНОВИЛСЯ ---
+        if (fabAdd != null) {
+            // Обычный клик
+            fabAdd.setOnClickListener(v -> startManualAdd());
+
+            // Длинный клик (Микрофон)
+            fabAdd.setOnLongClickListener(v -> {
+                startVoiceInput();
+                return true;
+            });
+        }
+        // --------------------------------
 
         createNotificationChannel();
 
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-
-        if (currentUser == null) {
-            startActivity(new Intent(MainActivity.this, LoginActivity.class));
-            finish();
-            return;
-        }
-
-        String userId = currentUser.getUid();
-        mDatabase = FirebaseDatabase.getInstance().getReference("users").child(userId).child("products");
-
-        db = AppDatabase.getInstance(this);
-        rvProducts = findViewById(R.id.rvProducts);
-        bottomNav = findViewById(R.id.bottomNav);
-        FloatingActionButton fabScan = findViewById(R.id.fabScan);
-
-        new Thread(() -> {
-            List<Product> savedProducts = db.productDao().getActiveProducts();
-            runOnUiThread(() -> {
-                productList = new ArrayList<>(savedProducts);
-
-                adapter = new ProductAdapter(productList, product -> {
-                    if (product.getExpiryDate() != null && product.getExpiryDate().contains("Ожидание")) {
-                        showDatePickerAndSetAlarm(product);
-                    } else {
-                        Toast.makeText(this, "Срок: " + product.getExpiryDate(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-                rvProducts.setLayoutManager(new LinearLayoutManager(this));
-                rvProducts.setAdapter(adapter);
-                setupSwipeToCart();
-                bottomNav.setOnItemSelectedListener(item -> {
-                    int itemId = item.getItemId();
-                    if (itemId == R.id.nav_products) {
-                        showingActiveProducts = true;
-                        reloadProductsFromDb(true);
-                        return true;
-                    }
-                    if (itemId == R.id.nav_cart) {
-                        showingActiveProducts = false;
-                        reloadProductsFromDb(false);
-                        return true;
-                    }
-                    return false;
-                });
-            });
-        }).start();
-
-        fabScan.setOnClickListener(v -> startScanner());
-    }
-
-    private void reloadProductsFromDb(boolean active) {
-        new Thread(() -> {
-            List<Product> list = active
-                    ? db.productDao().getActiveProducts()
-                    : db.productDao().getDeletedProducts();
-            runOnUiThread(() -> {
-                if (productList == null || adapter == null) return;
-                productList.clear();
-                productList.addAll(list);
-                adapter.notifyDataSetChanged();
-            });
-        }).start();
-    }
-
-    public void showDatePickerAndSetAlarm(Product product) {
-        final Calendar c = Calendar.getInstance();
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-            Calendar selectedDate = Calendar.getInstance();
-            selectedDate.set(year, month, dayOfMonth);
-            showTimePickerForDate(product, selectedDate);
-        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
-
-        datePickerDialog.setTitle("Когда истекает срок?");
-        datePickerDialog.show();
-    }
-
-    private void showTimePickerForDate(Product product, Calendar selectedDate) {
-        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-            selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            selectedDate.set(Calendar.MINUTE, minute);
-            selectedDate.set(Calendar.SECOND, 0);
-
-            if (selectedDate.before(Calendar.getInstance())) {
-                Toast.makeText(this, "Ошибка: время уже прошло!", Toast.LENGTH_SHORT).show();
-            } else {
-                setAlarm(product.getName(), selectedDate.getTimeInMillis());
-
-                String expiryText = "Годен до: " + selectedDate.get(Calendar.DAY_OF_MONTH) + "/" + (selectedDate.get(Calendar.MONTH) + 1) + "/" + selectedDate.get(Calendar.YEAR);
-                product.setExpiryDate(expiryText);
-
-                new Thread(() -> {
-                    try {
-                        db.productDao().insert(product);
-                        if (mDatabase != null) mDatabase.push().setValue(product);
-                        runOnUiThread(() -> adapter.notifyDataSetChanged());
-                    } catch (Exception e) { 
-                        Log.e("SAVE_ERROR", e.getMessage() != null ? e.getMessage() : "Unknown error"); 
-                    }
-                }).start();
-            }
-        }, 12, 0, true).show();
-    }
-
-    private void setAlarm(String productName, long timeInMillis) {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
-
-        Intent intent = new Intent(this, NotificationReceiver.class);
-        intent.putExtra("productName", productName);
-
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                this,
-                productName.hashCode(),
-                intent,
-                flags
-        );
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!alarmManager.canScheduleExactAlarms()) {
-                Toast.makeText(this, "Разрешите уведомления в настройках", Toast.LENGTH_LONG).show();
-                Intent settingsIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                startActivity(settingsIntent);
-                return;
-            }
-        }
-
-        try {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-        } catch (SecurityException e) {
-            Log.e("Alarm", "Ошибка безопасности: " + e.getMessage());
-        }
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("food_guard_channel", "FoodGuard", NotificationManager.IMPORTANCE_HIGH);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) manager.createNotificationChannel(channel);
-        }
-    }
-
-    private void startScanner() {
-        GmsBarcodeScanning.getClient(this).startScan()
-                .addOnSuccessListener(barcode -> {
-                    String code = barcode.getRawValue();
-                    if (code != null) {
-                        if (!showingActiveProducts) {
-                            Toast.makeText(this, "Откройте вкладку «Продукты» для сканирования", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        if (productList == null || adapter == null) return;
-                        Product newProduct = new Product("Поиск...", "Ожидание...", false);
-                        newProduct.setBarcode(code);
-                        productList.add(0, newProduct);
-                        adapter.notifyItemInserted(0);
-                        fetchProductInfo(code);
-                    }
-                });
-    }
-
-    private void fetchProductInfo(String code) {
-        String url = "https://world.openfoodfacts.org/api/v0/product/" + code + ".json";
-        Request request = new Request.Builder().url(url).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) { updateUI(0, "Ошибка сети", "Нет данных"); }
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful() && responseBody != null) {
-                        String data = responseBody.string();
-                        JSONObject json = new JSONObject(data);
-                        runOnUiThread(() -> {
-                            if (productList != null && !productList.isEmpty()) {
-                                Product p = productList.get(0);
-                                if (json.optInt("status") == 1 && json.has("product")) {
-                                    JSONObject productJson = json.optJSONObject("product");
-                                    if (productJson != null) {
-                                        p.setName(productJson.optString("product_name", "Продукт"));
-                                    }
-                                    showDatePickerAndSetAlarm(p);
-                                } else {
-                                    showManualInputDialog(p);
-                                }
-                            }
-                        });
-                    }
-                } catch (JSONException e) { 
-                    updateUI(0, "Ошибка", "JSON Error"); 
-                }
-            }
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_inventory) showFragment(new InventoryFragment());
+            else if (id == R.id.nav_cart) showFragment(new CartFragment());
+            else if (id == R.id.nav_profile) showFragment(new ProfileFragment());
+            return true;
         });
+
+        if (savedInstanceState == null) {
+            showFragment(new InventoryFragment());
+            bottomNav.setSelectedItemId(R.id.nav_inventory);
+        }
     }
 
-    private void showManualInputDialog(Product p) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Продукт не найден");
-        builder.setMessage("Введите название вручную:");
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
 
+    private void showFragment(@NonNull Fragment fragment) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
+    }
+
+    public void startManualAdd() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Новый продукт");
         final EditText input = new EditText(this);
-        input.setHint("Название товара");
-        builder.setView(input);
+        input.setHint("Название");
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(60, 20, 60, 0);
+        input.setLayoutParams(params);
+        container.addView(input);
+        builder.setView(container);
 
         builder.setPositiveButton("Далее", (dialog, which) -> {
             String name = input.getText().toString().trim();
-            p.setName(name.isEmpty() ? "Свой продукт" : name);
-            showDatePickerAndSetAlarm(p);
-        });
-        builder.setNegativeButton("Отмена", (dialog, which) -> {
-            if (productList != null && !productList.isEmpty()) {
-                productList.remove(0);
-                adapter.notifyItemRemoved(0);
+            if (!name.isEmpty()) {
+                Product p = new Product();
+                p.setName(name);
+                showQuantityDialog(p);
             }
         });
-        builder.setCancelable(false);
+        builder.setNegativeButton("Отмена", null);
         builder.show();
     }
 
-    private void updateUI(int pos, String name, String date) {
-        runOnUiThread(() -> {
-            if (productList != null && productList.size() > pos) {
-                productList.get(pos).setName(name);
-                productList.get(pos).setExpiryDate(date);
-                adapter.notifyItemChanged(pos);
-            }
+    private void showQuantityDialog(Product p) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Количество");
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setText("1");
+        builder.setView(input);
+        builder.setPositiveButton("Далее", (dialog, which) -> {
+            String q = input.getText().toString();
+            p.setQuantity(q.isEmpty() ? 1 : Integer.parseInt(q));
+            beginProductDateSetup(p);
         });
+        builder.show();
     }
 
-    private void setupSwipeToCart() {
-        ItemTouchHelper.Callback callback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public int getSwipeDirs(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                if (showingActiveProducts) {
-                    return ItemTouchHelper.RIGHT;
-                } else {
-                    return ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
-                }
+    /**
+     * Показывает цепочку выбора дат и времени.
+     * Сделан public для вызова из InventoryFragment.
+     */
+    public void beginProductDateSetup(Product p) {
+        Calendar now = Calendar.getInstance();
+        new DatePickerDialog(this, (v, y, m, d) -> {
+            Calendar exp = Calendar.getInstance();
+            exp.set(y, m, d);
+            p.setExpiryDate(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(exp.getTime()));
+
+            new TimePickerDialog(this, (v2, h, min) -> {
+                Calendar notif = Calendar.getInstance();
+                notif.set(y, m, d, h, min);
+                p.setNotificationDate(new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(notif.getTime()));
+                p.setNotificationTimestamp(notif.getTimeInMillis());
+                persistProduct(p);
+            }, 9, 0, true).show();
+        }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    /**
+     * Синхронизирует продукт с Firebase.
+     * Сделан public для вызова из InventoryFragment.
+     */
+    public void syncProductToFirebase(Product p) {
+        if (mDatabase != null) {
+            mDatabase.child(String.valueOf(p.getId())).setValue(p);
+        }
+    }
+
+    private void persistProduct(Product p) {
+        new Thread(() -> {
+            long id;
+            if (p.getId() == 0) {
+                id = db.productDao().insert(p);
+                p.setId((int) id);
+            } else {
+                id = p.getId();
             }
 
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
+            setAlarm(p.getName(), p.getNotificationTimestamp(), (int) id);
 
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int pos = viewHolder.getAdapterPosition();
-                if (pos == RecyclerView.NO_POSITION || productList == null || adapter == null) {
-                    return;
-                }
-                final Product p = productList.get(pos);
-                final int swipedPos = pos;
+            runOnUiThread(() -> {
+                syncProductToFirebase(p);
+                InventoryFragment inv = (InventoryFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_container);
+                if (inv != null) inv.reloadFromDb();
+                Toast.makeText(this, "Сохранено!", Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+    }
 
-                if (showingActiveProducts) {
-                    if (direction == ItemTouchHelper.RIGHT) {
-                        p.setDeleted(true);
-                        new Thread(() -> {
-                            db.productDao().update(p);
-                            runOnUiThread(() -> {
-                                if (productList == null || adapter == null) return;
-                                if (swipedPos < 0 || swipedPos >= productList.size()) return;
-                                productList.remove(swipedPos);
-                                adapter.notifyItemRemoved(swipedPos);
-                                Toast.makeText(MainActivity.this, "Перенесено в корзину", Toast.LENGTH_SHORT).show();
-                            });
-                        }).start();
-                    }
-                } else {
-                    if (direction == ItemTouchHelper.LEFT) {
-                        p.setDeleted(false);
-                        new Thread(() -> {
-                            db.productDao().update(p);
-                            runOnUiThread(() -> {
-                                if (productList == null || adapter == null) return;
-                                if (swipedPos < 0 || swipedPos >= productList.size()) return;
-                                productList.remove(swipedPos);
-                                adapter.notifyItemRemoved(swipedPos);
-                                Toast.makeText(MainActivity.this, "Восстановлено в продукты", Toast.LENGTH_SHORT).show();
-                            });
-                        }).start();
-                    } else if (direction == ItemTouchHelper.RIGHT) {
-                        new Thread(() -> {
-                            db.productDao().delete(p);
-                            runOnUiThread(() -> {
-                                if (productList == null || adapter == null) return;
-                                if (swipedPos < 0 || swipedPos >= productList.size()) return;
-                                productList.remove(swipedPos);
-                                adapter.notifyItemRemoved(swipedPos);
-                                Toast.makeText(MainActivity.this, "Удалено навсегда", Toast.LENGTH_SHORT).show();
-                            });
-                        }).start();
-                    }
-                }
+    private void setAlarm(String name, long time, int id) {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, NotificationReceiver.class).putExtra("productName", name);
+        PendingIntent pi = PendingIntent.getBroadcast(this, Math.abs(id), intent,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        if (am == null) return;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (am.canScheduleExactAlarms()) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pi);
+            } else {
+                requestExactAlarmPermission();
+                am.set(AlarmManager.RTC_WAKEUP, time, pi);
             }
-        };
-        new ItemTouchHelper(callback).attachToRecyclerView(rvProducts);
+        } else {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pi);
+        }
+    }
+    private void requestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        }
+    }
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel c = new NotificationChannel("food_guard_channel", "FoodGuard", NotificationManager.IMPORTANCE_HIGH);
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm != null) nm.createNotificationChannel(c);
+        }
+    }
+    // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ГОЛОСА ---
+    private void startVoiceInput() {
+        Intent intent = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "ru-RU");
+        intent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Назовите продукт...");
+        try {
+            startActivityForResult(intent, 100);
+        } catch (Exception e) {
+            Toast.makeText(this, "Голосовой ввод недоступен", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
+            java.util.ArrayList<String> result = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+            if (result != null && !result.isEmpty()) {
+                String spokenText = result.get(0);
+                Product p = new Product();
+                p.setName(spokenText);
+                beginProductDateSetup(p);
+            }
+        }
     }
 }
