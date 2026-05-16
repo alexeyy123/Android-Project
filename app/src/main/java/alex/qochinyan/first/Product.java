@@ -23,11 +23,11 @@ public class Product {
     private String notificationDate;
     private long notificationTimestamp;
 
-    // Firebase
+
     public Product() {
     }
 
-    // Full constructor
+
     public Product(int id, String name, String expiryDate, boolean isExpired, String barcode, boolean isDeleted,
                    int quantity, String manufacturingDate, String notificationDate, long notificationTimestamp) {
         this.id = id;

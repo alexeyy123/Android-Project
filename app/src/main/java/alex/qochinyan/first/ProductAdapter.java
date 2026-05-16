@@ -67,7 +67,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
         Product product = productList.get(position);
 
-        // Sticky swipe: apply translation if this item is marked as swiped
+
         float density = holder.itemView.getContext().getResources().getDisplayMetrics().density;
         float stickyTranslation = 200 * density;
         
@@ -95,7 +95,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             holder.tvNotification.setText("Notify: " + line);
         }
 
-        // --- BUTTONS ---
+
         holder.btnEdit.setOnClickListener(v -> {
             if (editListener != null) editListener.onProductEdit(product);
             setSwipedPosition(-1); // Close after action
@@ -105,15 +105,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             if (deleteListener != null) {
                 deleteListener.onProductDelete(product, holder.getAdapterPosition());
             }
-            setSwipedPosition(-1); // Close after action
+            setSwipedPosition(-1);
         });
 
-        // --- INTERACTION ---
+
         holder.cardView.setOnClickListener(v -> {
             if (swipedPosition == position) {
-                setSwipedPosition(-1); // Tapping swiped item closes it
+                setSwipedPosition(-1);
             } else if (swipedPosition != -1) {
-                setSwipedPosition(-1); // Tapping any item closes swiped one
+                setSwipedPosition(-1);
             } else {
                 if (clickListener != null) clickListener.onProductClick(product);
             }

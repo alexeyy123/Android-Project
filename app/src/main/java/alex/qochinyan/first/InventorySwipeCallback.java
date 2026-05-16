@@ -27,7 +27,7 @@ public class InventorySwipeCallback extends ItemTouchHelper.SimpleCallback {
 
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        // Mark this position as swiped in the adapter to keep it open
+
         adapter.setSwipedPosition(viewHolder.getAdapterPosition());
     }
 
@@ -40,11 +40,11 @@ public class InventorySwipeCallback extends ItemTouchHelper.SimpleCallback {
             ProductAdapter.ProductViewHolder holder = (ProductAdapter.ProductViewHolder) viewHolder;
             View cardView = holder.cardView;
             
-            // Fixed 200dp limit for the sticky effect
+
             float density = recyclerView.getContext().getResources().getDisplayMetrics().density;
             float maxSwipe = 200 * density;
             
-            // Clamp the visual translation during the swipe gesture
+
             float translationX = Math.min(dX, maxSwipe);
             cardView.setTranslationX(translationX);
         } else {
@@ -54,6 +54,6 @@ public class InventorySwipeCallback extends ItemTouchHelper.SimpleCallback {
 
     @Override
     public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
-        return 0.3f; // Swipe 30% of width to trigger the "swiped" state
+        return 0.3f;
     }
 }

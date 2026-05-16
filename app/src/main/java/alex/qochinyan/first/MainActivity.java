@@ -63,18 +63,18 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
 
-        // --- ВОТ ЭТОТ КУСОК ОБНОВИЛСЯ ---
+
         if (fabAdd != null) {
-            // Обычный клик
+
             fabAdd.setOnClickListener(v -> startManualAdd());
 
-            // Длинный клик (Микрофон)
+
             fabAdd.setOnLongClickListener(v -> {
                 startVoiceInput();
                 return true;
             });
         }
-        // --------------------------------
+
 
         createNotificationChannel();
 
@@ -143,10 +143,7 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    /**
-     * Показывает цепочку выбора дат и времени.
-     * Сделан public для вызова из InventoryFragment.
-     */
+
     public void beginProductDateSetup(Product p) {
         Calendar now = Calendar.getInstance();
         new DatePickerDialog(this, (v, y, m, d) -> {
@@ -164,10 +161,7 @@ public class MainActivity extends AppCompatActivity {
         }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-    /**
-     * Синхронизирует продукт с Firebase.
-     * Сделан public для вызова из InventoryFragment.
-     */
+
     public void syncProductToFirebase(Product p) {
         if (mDatabase != null) {
             mDatabase.child(String.valueOf(p.getId())).setValue(p);
@@ -229,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
             if (nm != null) nm.createNotificationChannel(c);
         }
     }
-    // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ГОЛОСА ---
+
     private void startVoiceInput() {
         Intent intent = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,

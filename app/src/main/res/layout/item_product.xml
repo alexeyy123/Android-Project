@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!-- Background Layer (Buttons) -->
+
     <LinearLayout
         android:id="@+id/swipeButtonsContainer"
         android:layout_width="wrap_content"
@@ -42,7 +42,7 @@
             app:cornerRadius="12dp" />
     </LinearLayout>
 
-    <!-- Foreground Layer (Product Card) -->
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/productCard"
         android:layout_width="match_parent"

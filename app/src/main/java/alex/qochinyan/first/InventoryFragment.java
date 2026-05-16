@@ -21,8 +21,8 @@ public class InventoryFragment extends Fragment {
 
     private RecyclerView rvProducts;
     private ProductAdapter adapter;
-    private final List<Product> productList = new ArrayList<>(); // Текущий список в адаптере
-    private final List<Product> fullList = new ArrayList<>();    // Копия всех продуктов для поиска
+    private final List<Product> productList = new ArrayList<>();
+    private final List<Product> fullList = new ArrayList<>();
     private AppDatabase db;
 
     @Nullable
@@ -32,7 +32,7 @@ public class InventoryFragment extends Fragment {
         db = AppDatabase.getInstance(requireContext().getApplicationContext());
         rvProducts = v.findViewById(R.id.rvProducts);
 
-        // Инициализация адаптера
+
         adapter = new ProductAdapter(productList,
                 product -> {
                     MainActivity act = mainActivity();
@@ -47,7 +47,7 @@ public class InventoryFragment extends Fragment {
         rvProducts.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvProducts.setAdapter(adapter);
 
-        // ЛОГИКА ПОИСКА
+
         SearchView searchView = v.findViewById(R.id.searchView);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -68,7 +68,7 @@ public class InventoryFragment extends Fragment {
         return v;
     }
 
-    // Метод фильтрации
+
     private void filter(String text) {
         List<Product> filteredList = new ArrayList<>();
         for (Product item : fullList) {
@@ -95,7 +95,7 @@ public class InventoryFragment extends Fragment {
             ItemTouchHelper helper = new ItemTouchHelper(callback);
             helper.attachToRecyclerView(rvProducts);
         } catch (Exception e) {
-            // Если нет класса колбэка
+
         }
     }
 
@@ -107,7 +107,7 @@ public class InventoryFragment extends Fragment {
                 MainActivity act = mainActivity();
                 if (act != null) act.syncProductToFirebase(product);
 
-                // Удаляем из обоих списков, чтобы поиск не вернул удаленное
+
                 fullList.remove(product);
                 if (adapterPosition >= 0 && adapterPosition < productList.size()) {
                     productList.remove(adapterPosition);
@@ -125,10 +125,10 @@ public class InventoryFragment extends Fragment {
             List<Product> list = db.productDao().getAllActive();
             postIfAlive(() -> {
                 fullList.clear();
-                fullList.addAll(list); // Обновляем полную копию
+                fullList.addAll(list);
 
                 productList.clear();
-                productList.addAll(list); // Обновляем то, что видит юзер
+                productList.addAll(list);
                 adapter.notifyDataSetChanged();
             });
         }).start();

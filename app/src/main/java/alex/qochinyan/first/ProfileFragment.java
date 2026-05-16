@@ -21,7 +21,7 @@ public class ProfileFragment extends Fragment {
     private TextView tvTotalCount;
     private TextView tvExpiringCount;
 
-    // Новые элементы для индикатора заполненности
+
     private ProgressBar pbStorageLoad;
     private TextView tvStoragePercent;
 
@@ -34,14 +34,14 @@ public class ProfileFragment extends Fragment {
         tvTotalCount = v.findViewById(R.id.tvTotalCount);
         tvExpiringCount = v.findViewById(R.id.tvExpiringCount);
 
-        // Связываем новые UI элементы
+
         pbStorageLoad = v.findViewById(R.id.pbStorageLoad);
         tvStoragePercent = v.findViewById(R.id.tvStoragePercent);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();
 
-        // --- ИСПРАВЛЕНИЕ ДЛЯ ГОСТЯ ---
+
         if (user == null) {
             tvEmail.setText("Guest Mode");
             btnLogout.setText("Log In / Sign Up");
@@ -81,13 +81,13 @@ public class ProfileFragment extends Fragment {
             int total = db.productDao().countActiveInventory();
             int soon = db.productDao().countExpiringSoon(now, weekLater);
 
-            // РАСЧЕТ ПРОЦЕНТА ЗАПОЛНЕННОСТИ (Лимит холодильника — 30 продуктов)
+
             int maxCapacity = 30;
             int percent = 0;
             if (maxCapacity > 0) {
                 percent = (total * 100) / maxCapacity;
             }
-            if (percent > 100) percent = 100; // Полоска не должна улетать за край
+            if (percent > 100) percent = 100;
 
             final int finalPercent = percent;
 
@@ -97,12 +97,12 @@ public class ProfileFragment extends Fragment {
                         tvTotalCount.setText(String.valueOf(total));
                         tvExpiringCount.setText(String.valueOf(soon));
 
-                        // ОБНОВЛЯЕМ ИНДИКАТОР В UI
+
                         if (pbStorageLoad != null && tvStoragePercent != null) {
                             pbStorageLoad.setProgress(finalPercent);
                             tvStoragePercent.setText(finalPercent + "%");
 
-                            // Если холодильник забит на 85% и больше — красим в красный!
+
                             if (finalPercent >= 85) {
                                 pbStorageLoad.getProgressDrawable().setColorFilter(
                                         android.graphics.Color.RED, android.graphics.PorterDuff.Mode.SRC_IN);

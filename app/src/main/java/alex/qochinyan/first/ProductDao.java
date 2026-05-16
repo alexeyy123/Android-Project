@@ -19,11 +19,11 @@ public interface ProductDao {
     @Query("SELECT * FROM products WHERE isDeleted = 1 ORDER BY id DESC")
     List<Product> getDeletedProducts();
 
-    /** Case-insensitive match so "Coca-Cola" merges with "coca-cola" (no duplicate rows). */
+
     @Query("SELECT * FROM products WHERE isDeleted = 0 AND LOWER(TRIM(name)) = LOWER(TRIM(:name)) LIMIT 1")
     Product findActiveByName(String name);
 
-    // ИСПРАВЛЕНО: Добавлен onConflict = OnConflictStrategy.REPLACE
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(Product product);
 
@@ -42,7 +42,7 @@ public interface ProductDao {
     @Query("DELETE FROM products WHERE isDeleted = 1")
     void clearDeletedProducts();
 
-    // ДОПОЛНИТЕЛЬНО: Метод для обновления или вставки (удобно)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdate(Product product);
 }

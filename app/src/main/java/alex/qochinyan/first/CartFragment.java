@@ -34,14 +34,14 @@ public class CartFragment extends Fragment {
         db = AppDatabase.getInstance(requireContext().getApplicationContext());
         rvCart = v.findViewById(R.id.rvCart);
 
-        // --- ИНИЦИАЛИЗАЦИЯ СЕНСОРОВ ДЛЯ ВСТРЯСКИ ---
+
         sensorManager = (android.hardware.SensorManager) requireContext().getSystemService(android.content.Context.SENSOR_SERVICE);
         acceleration = 10f;
         currentAcceleration = android.hardware.SensorManager.GRAVITY_EARTH;
         lastAcceleration = android.hardware.SensorManager.GRAVITY_EARTH;
-        // ------------------------------------------
 
-        // Логика кнопки очистки (оставляем, пусть будет и кнопка, и встряска)
+
+
         View btnClear = v.findViewById(R.id.tvClearCart);
         if (btnClear != null) {
             btnClear.setOnClickListener(view -> performShakeClear());
@@ -60,9 +60,9 @@ public class CartFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // 1. Загружаем данные
+
         reloadFromDb();
-        // 2. Включаем микрофон для встряски
+
         if (sensorManager != null) {
             sensorManager.registerListener(sensorListener,
                     sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER),
@@ -72,14 +72,14 @@ public class CartFragment extends Fragment {
 
     @Override
     public void onPause() {
-        // Выключаем датчик, когда уходим с экрана, чтобы не тратить батарею
+
         if (sensorManager != null) {
             sensorManager.unregisterListener(sensorListener);
         }
         super.onPause();
     }
 
-    // --- ЛОГИКА ВСТРЯСКИ (ОБРАБОТЧИК) ---
+
     private final android.hardware.SensorEventListener sensorListener = new android.hardware.SensorEventListener() {
         @Override
         public void onSensorChanged(android.hardware.SensorEvent event) {
@@ -91,7 +91,7 @@ public class CartFragment extends Fragment {
             float delta = currentAcceleration - lastAcceleration;
             acceleration = acceleration * 0.9f + delta;
 
-            // Если тряхнули достаточно сильно
+
             if (acceleration > 12) {
                 if (!cartList.isEmpty()) {
                     performShakeClear();
@@ -103,7 +103,7 @@ public class CartFragment extends Fragment {
         public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) {}
     };
 
-    // Метод, который вызывается и кнопкой, и встряской
+
     private void performShakeClear() {
         new android.app.AlertDialog.Builder(requireContext())
                 .setTitle("Очистить корзину?")

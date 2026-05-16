@@ -22,7 +22,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         String channelId = "food_guard_channel";
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.mipmap.ic_launcher) // проверь, что иконка есть
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Срок годности истекает!")
                 .setContentText("Продукт: " + productName)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

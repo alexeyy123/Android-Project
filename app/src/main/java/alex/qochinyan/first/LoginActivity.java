@@ -18,7 +18,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         mAuth = FirebaseAuth.getInstance();
-        // Если уже залогинены — летим в Main
+
         if (mAuth.getCurrentUser() != null) {
             startMainActivity();
         }
@@ -31,7 +31,7 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Привязка UI
+
         emailField = findViewById(R.id.emailField);
         passwordField = findViewById(R.id.passwordField);
         confirmPasswordField = findViewById(R.id.confirmPasswordField);
@@ -39,7 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         signUpBtn = findViewById(R.id.signUpBtn);
         guestBtn = findViewById(R.id.guestBtn);
 
-        // ЛОГИН
+
         loginBtn.setOnClickListener(v -> {
             String email = emailField.getText().toString().trim();
             String password = passwordField.getText().toString().trim();
@@ -59,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
                     });
         });
 
-        // РЕГИСТРАЦИЯ
+
         signUpBtn.setOnClickListener(v -> {
             String email = emailField.getText().toString().trim();
             String password = passwordField.getText().toString().trim();
@@ -85,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
                     });
         });
 
-        // ГОСТЬ (Работает без Firebase)
+
         guestBtn.setOnClickListener(v -> startMainActivity());
     }
 
