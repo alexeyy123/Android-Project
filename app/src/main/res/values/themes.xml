@@ -1,11 +1,11 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
     <style name="Theme.First" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Редизайн фона и статус-бара -->
+
         <item name="android:windowBackground">@drawable/login_gradient</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
 
-        <!-- Основные цвета -->
+
         <item name="colorPrimary">#26D07C</item>
         <item name="colorPrimaryVariant">#1E9E5D</item>
         <item name="colorOnPrimary">@color/white</item>

@@ -15,8 +15,11 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 public class ProfileFragment extends Fragment {
+
+    private TextView tvAiAdvice;
 
     private TextView tvTotalCount;
     private TextView tvExpiringCount;
@@ -29,12 +32,13 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_profile, container, false);
+
+
         TextView tvEmail = v.findViewById(R.id.tvUserEmail);
         MaterialButton btnLogout = v.findViewById(R.id.btnLogout);
+        tvAiAdvice = v.findViewById(R.id.tvAiAdvice);
         tvTotalCount = v.findViewById(R.id.tvTotalCount);
         tvExpiringCount = v.findViewById(R.id.tvExpiringCount);
-
-
         pbStorageLoad = v.findViewById(R.id.pbStorageLoad);
         tvStoragePercent = v.findViewById(R.id.tvStoragePercent);
 
@@ -50,18 +54,31 @@ public class ProfileFragment extends Fragment {
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
                 requireActivity().finish();
             });
-            return v;
+        } else {
+            String email = user.getEmail();
+            tvEmail.setText(email != null && !email.isEmpty() ? email : "—");
+
+            btnLogout.setOnClickListener(view -> {
+                auth.signOut();
+                startActivity(new Intent(requireContext(), LoginActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+                requireActivity().finish();
+            });
         }
 
-        String email = user.getEmail();
-        tvEmail.setText(email != null && !email.isEmpty() ? email : "—");
 
-        btnLogout.setOnClickListener(view -> {
-            auth.signOut();
-            startActivity(new Intent(requireContext(), LoginActivity.class)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
-            requireActivity().finish();
-        });
+        androidx.constraintlayout.widget.ConstraintLayout aiCardLayout = v.findViewById(R.id.aiCardLayout);
+        if (aiCardLayout != null) {
+            android.graphics.drawable.Drawable background = aiCardLayout.getBackground();
+            if (background instanceof android.graphics.drawable.AnimationDrawable) {
+                android.graphics.drawable.AnimationDrawable animationDrawable = (android.graphics.drawable.AnimationDrawable) background;
+                animationDrawable.setEnterFadeDuration(2000);
+                animationDrawable.setExitFadeDuration(2000);
+
+
+                aiCardLayout.post(animationDrawable::start);
+            }
+        }
 
         return v;
     }
@@ -81,7 +98,6 @@ public class ProfileFragment extends Fragment {
             int total = db.productDao().countActiveInventory();
             int soon = db.productDao().countExpiringSoon(now, weekLater);
 
-
             int maxCapacity = 30;
             int percent = 0;
             if (maxCapacity > 0) {
@@ -91,17 +107,18 @@ public class ProfileFragment extends Fragment {
 
             final int finalPercent = percent;
 
+
+            String aiAdviceText = FoodAIEngine.generateSmartAdvice(total, soon, maxCapacity);
+
             if (getActivity() != null) {
                 requireActivity().runOnUiThread(() -> {
                     if (isAdded()) {
                         tvTotalCount.setText(String.valueOf(total));
                         tvExpiringCount.setText(String.valueOf(soon));
 
-
                         if (pbStorageLoad != null && tvStoragePercent != null) {
                             pbStorageLoad.setProgress(finalPercent);
                             tvStoragePercent.setText(finalPercent + "%");
-
 
                             if (finalPercent >= 85) {
                                 pbStorageLoad.getProgressDrawable().setColorFilter(
@@ -109,6 +126,11 @@ public class ProfileFragment extends Fragment {
                             } else {
                                 pbStorageLoad.getProgressDrawable().clearColorFilter();
                             }
+                        }
+
+
+                        if (tvAiAdvice != null) {
+                            tvAiAdvice.setText(aiAdviceText);
                         }
                     }
                 });

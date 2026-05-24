@@ -159,6 +159,66 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAiAdvice"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="20dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
+            app:strokeWidth="1.5dp"
+            app:strokeColor="#00FF87"
+            app:layout_constraintTop_toBottomOf="@id/cardStats"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/aiCardLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_ai_gradient_animated"
+                android:padding="22dp">
+
+                <TextView
+                    android:id="@+id/tvAiHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✨ FOODGUARD INTELLIGENCE"
+                    android:textColor="#00FF87"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <View
+                    android:id="@+id/aiDivider"
+                    android:layout_width="40dp"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="8dp"
+                    android:background="#00FF87"
+                    app:layout_constraintTop_toBottomOf="@id/tvAiHeader"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <TextView
+                    android:id="@+id/tvAiAdvice"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Initializing neural core..."
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:lineSpacingExtra="4sp"
+                    android:fontFamily="sans-serif"
+                    app:layout_constraintTop_toBottomOf="@id/aiDivider"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <ImageView
             android:id="@+id/ivAvatar"
             android:layout_width="100dp"
@@ -169,7 +229,7 @@
             android:scaleType="fitCenter"
             android:src="@android:drawable/ic_menu_myplaces"
             app:tint="#FFFFFF"
-            app:layout_constraintTop_toBottomOf="@id/cardStats"
+            app:layout_constraintTop_toBottomOf="@id/cardAiAdvice"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

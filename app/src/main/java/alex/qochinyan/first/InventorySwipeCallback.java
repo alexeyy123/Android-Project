@@ -7,10 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-/**
- * Sticky Swipe: Items stay open after a right swipe.
- * Clamped to 200dp to keep buttons visible and clickable.
- */
+
 public class InventorySwipeCallback extends ItemTouchHelper.SimpleCallback {
 
     private final ProductAdapter adapter;
